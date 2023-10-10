@@ -17,19 +17,42 @@ namespace RinhaDeCompiladores
             {
                 case NodeType.Var:
                     Var varNode = (Var)node;
+
                     return env.LookupVariable(varNode.Text);
 
                 case NodeType.Function:
-                    return null;
+                    return node;
 
                 case NodeType.Call:
-                    return null;
+                    Call callNode = (Call)node;
+                    object? callee = Evaluate(callNode.Callee, env);
+
+                    if (callee is Function calleeFunction)
+                    {
+                        if (callNode.Arguments.Count != calleeFunction.Parameters.Count)
+                        {
+                            throw new Exception($"Call passed {callNode.Arguments.Count} arguments, function accepts {calleeFunction.Parameters.Count}");
+                        }
+
+                        Environment functionEnv = new Environment(env);
+
+                        for (int i = 0; i < calleeFunction.Parameters.Count; i++)
+                        {
+                            functionEnv.DeclareVariable(calleeFunction.Parameters[i].Text, Evaluate(callNode.Arguments[i], env));
+                        }
+
+                        return Evaluate(calleeFunction.Value, functionEnv);
+                    }
+                    else
+                    {
+                        throw new Exception("Cannot call a non-function object.");
+                    }
 
                 case NodeType.Let:
                     Let letNode = (Let)node;
                     env.DeclareVariable(letNode.Name.Text, Evaluate(letNode.Value, env));
-                    Evaluate(letNode.Next, env);
-                    return null;
+
+                    return Evaluate(letNode.Next, env);
 
                 case NodeType.Str:
                     return ((Str)node).Value;
@@ -44,7 +67,21 @@ namespace RinhaDeCompiladores
                     return EvaluateBinary((Binary)node, env);
 
                 case NodeType.If:
-                    return null;
+                    If ifNode = (If)node;
+                    object? condition = Evaluate(ifNode.Condition, env);
+
+                    if (condition is bool conditionBool)
+                    {
+                        if (conditionBool)
+                            return Evaluate(ifNode.Then, env);
+                        else
+                            return Evaluate(ifNode.Otherwise, env);
+                    }
+                    else
+                    {
+                        throw new Exception("Condition is not boolean");
+                    }
+
 
                 case NodeType.Tuple:
                     return null;

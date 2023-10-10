@@ -13,7 +13,7 @@ namespace RinhaDeCompiladores.Schemes
     {
         [JsonConverter(typeof(NodeConverter))]
         public Term Callee { get; set; }
-        [JsonConverter(typeof(NodeConverter))]
+        [JsonConverter(typeof(NodeListConverter))]
         public List<Term> Arguments { get; set; }
 
         public Call(Term callee, List<Term> arguments)

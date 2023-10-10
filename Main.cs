@@ -16,7 +16,7 @@ namespace RinhaDeCompiladores
 
         static void Main(string[] args)
         {
-            var ast = JsonConvert.DeserializeObject<AST>(File.ReadAllText("./Files/print_declared_var.json"))!;
+            var ast = JsonConvert.DeserializeObject<AST>(File.ReadAllText("./Files/combination.json"))!;
             translator.Evaluate(ast.Expression, env);
         }
     }
