@@ -11,12 +11,13 @@ namespace RinhaDeCompiladores
 {
     public class Interpreter : ITranslator
     {
-        public object? Evaluate(Term node)
+        public object? Evaluate(Term node, Environment env)
         {
             switch (node.Kind)
             {
                 case NodeType.Var:
-                    return null;
+                    Var varNode = (Var)node;
+                    return env.LookupVariable(varNode.Text);
 
                 case NodeType.Function:
                     return null;
@@ -25,6 +26,9 @@ namespace RinhaDeCompiladores
                     return null;
 
                 case NodeType.Let:
+                    Let letNode = (Let)node;
+                    env.DeclareVariable(letNode.Name.Text, Evaluate(letNode.Value, env));
+                    Evaluate(letNode.Next, env);
                     return null;
 
                 case NodeType.Str:
@@ -37,7 +41,7 @@ namespace RinhaDeCompiladores
                     return ((Bool)node).Value;
 
                 case NodeType.Binary:
-                    return EvaluateBinary((Binary)node);
+                    return EvaluateBinary((Binary)node, env);
 
                 case NodeType.If:
                     return null;
@@ -47,18 +51,18 @@ namespace RinhaDeCompiladores
 
                 case NodeType.First:
                     if (node is First firstNode && firstNode.Value is Schemes.Tuple tupleFirstNode)
-                        return Evaluate(tupleFirstNode.First);
+                        return Evaluate(tupleFirstNode.First, env);
                     else
                         throw new Exception("");
 
                 case NodeType.Second:
                     if (node is Second secondNode && secondNode.Value is Schemes.Tuple tupleSecondNode)
-                        return Evaluate(tupleSecondNode.Second);
+                        return Evaluate(tupleSecondNode.Second, env);
                     else
                         throw new Exception("");
 
                 case NodeType.Print:
-                    object? printValue = Evaluate(((Print)node).Value);
+                    object? printValue = Evaluate(((Print)node).Value, env);
                     Console.WriteLine(printValue);
                     return printValue;
 
@@ -67,10 +71,12 @@ namespace RinhaDeCompiladores
             }
         }
 
-        private object? EvaluateBinary(Binary node)
+        #region binary
+
+        private object? EvaluateBinary(Binary node, Environment env)
         {
-            object? lhs = Evaluate(node.Lhs);
-            object? rhs = Evaluate(node.Rhs);
+            object? lhs = Evaluate(node.Lhs, env);
+            object? rhs = Evaluate(node.Rhs, env);
 
             if (lhs is int && rhs is int)
             {
@@ -80,7 +86,7 @@ namespace RinhaDeCompiladores
             {
                 return EvaluateBinaryBoolean((bool)lhs, (bool)rhs, node.Op);
             }
-            else if ((lhs is string && rhs is string) || (lhs is int && rhs is string) || (lhs is string && rhs is int))
+            else if (lhs is string && rhs is string || lhs is int && rhs is string || lhs is string && rhs is int)
             {
                 return EvaluateBinaryText(lhs.ToString()!, rhs.ToString()!, node.Op);
             }
@@ -152,5 +158,7 @@ namespace RinhaDeCompiladores
                     throw new Exception($"'{op}' is not valid for text operations.");
             }
         }
+
+        #endregion
     }
 }
