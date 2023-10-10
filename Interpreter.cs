@@ -1,4 +1,5 @@
-﻿using RinhaDeCompiladores.Schemes;
+﻿using Newtonsoft.Json.Linq;
+using RinhaDeCompiladores.Schemes;
 using RinhaDeCompiladores.Schemes.Abstractions;
 using System;
 using System.Collections.Generic;
@@ -27,13 +28,16 @@ namespace RinhaDeCompiladores
                     return null;
 
                 case NodeType.Str:
-                    return ((Str) node).Value;
+                    return ((Str)node).Value;
 
                 case NodeType.Int:
-                    return null;
+                    return ((Int)node).Value;
+
+                case NodeType.Bool:
+                    return ((Bool)node).Value;
 
                 case NodeType.Binary:
-                    return null;
+                    return EvaluateBinary((Binary)node);
 
                 case NodeType.If:
                     return null;
@@ -42,18 +46,110 @@ namespace RinhaDeCompiladores
                     return null;
 
                 case NodeType.First:
-                    return null;
+                    if (node is First firstNode && firstNode.Value is Schemes.Tuple tupleFirstNode)
+                        return Evaluate(tupleFirstNode.First);
+                    else
+                        throw new Exception("");
 
                 case NodeType.Second:
-                    return null;
+                    if (node is Second secondNode && secondNode.Value is Schemes.Tuple tupleSecondNode)
+                        return Evaluate(tupleSecondNode.Second);
+                    else
+                        throw new Exception("");
 
                 case NodeType.Print:
-                    object? value = Evaluate(((Print) node).Value);
-                    Console.WriteLine(value);
-                    return null;
+                    object? printValue = Evaluate(((Print)node).Value);
+                    Console.WriteLine(printValue);
+                    return printValue;
 
                 default:
-                    return null;
+                    throw new Exception($"Kind '{node.Kind}' does not exist.");
+            }
+        }
+
+        private object? EvaluateBinary(Binary node)
+        {
+            object? lhs = Evaluate(node.Lhs);
+            object? rhs = Evaluate(node.Rhs);
+
+            if (lhs is int && rhs is int)
+            {
+                return EvaluateBinaryNumeric((int)lhs, (int)rhs, node.Op);
+            }
+            else if (lhs is bool && rhs is bool)
+            {
+                return EvaluateBinaryBoolean((bool)lhs, (bool)rhs, node.Op);
+            }
+            else if ((lhs is string && rhs is string) || (lhs is int && rhs is string) || (lhs is string && rhs is int))
+            {
+                return EvaluateBinaryText(lhs.ToString()!, rhs.ToString()!, node.Op);
+            }
+            else
+            {
+                throw new Exception($"Binary operation is impossible between '{lhs?.GetType().Name ?? "null"}' and '{rhs?.GetType().Name ?? "null"}'");
+            }
+        }
+
+        private object? EvaluateBinaryNumeric(int lhs, int rhs, BinaryOp op)
+        {
+            switch (op)
+            {
+                case BinaryOp.Add:
+                    return lhs + rhs;
+                case BinaryOp.Sub:
+                    return lhs - rhs;
+                case BinaryOp.Mul:
+                    return lhs * rhs;
+                case BinaryOp.Div:
+                    return lhs / rhs;
+                case BinaryOp.Rem:
+                    return lhs % rhs;
+                case BinaryOp.Eq:
+                    return lhs == rhs;
+                case BinaryOp.Neq:
+                    return lhs != rhs;
+                case BinaryOp.Lt:
+                    return lhs < rhs;
+                case BinaryOp.Gt:
+                    return lhs > rhs;
+                case BinaryOp.Lte:
+                    return lhs <= rhs;
+                case BinaryOp.Gte:
+                    return lhs >= rhs;
+                default:
+                    throw new Exception($"'{op}' is not valid for numeric operations.");
+            }
+        }
+
+        private object? EvaluateBinaryBoolean(bool lhs, bool rhs, BinaryOp op)
+        {
+            switch (op)
+            {
+                case BinaryOp.Eq:
+                    return lhs == rhs;
+                case BinaryOp.Neq:
+                    return lhs != rhs;
+                case BinaryOp.And:
+                    return lhs && rhs;
+                case BinaryOp.Or:
+                    return lhs || rhs;
+                default:
+                    throw new Exception($"'{op}' is not valid for boolean operations.");
+            }
+        }
+
+        private object? EvaluateBinaryText(string lhs, string rhs, BinaryOp op)
+        {
+            switch (op)
+            {
+                case BinaryOp.Add:
+                    return lhs + rhs;
+                case BinaryOp.Eq:
+                    return lhs == rhs;
+                case BinaryOp.Neq:
+                    return lhs != rhs;
+                default:
+                    throw new Exception($"'{op}' is not valid for text operations.");
             }
         }
     }

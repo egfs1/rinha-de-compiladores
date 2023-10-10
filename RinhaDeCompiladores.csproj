@@ -12,6 +12,9 @@
   </ItemGroup>
 
   <ItemGroup>
+    <None Update="Files\print_binary.json">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
     <None Update="Files\print.json">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>

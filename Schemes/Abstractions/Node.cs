@@ -14,6 +14,7 @@ namespace RinhaDeCompiladores.Schemes.Abstractions
         Let,
         Str,
         Int,
+        Bool,
         Binary,
         If,
         Tuple,

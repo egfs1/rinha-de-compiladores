@@ -9,16 +9,17 @@ using System.Threading.Tasks;
 
 namespace RinhaDeCompiladores.Schemes
 {
-    public class AST : Node
+    public class Call : Term
     {
-        public string Name { get; set; }
         [JsonConverter(typeof(NodeConverter))]
-        public Term Expression { get; set; }
+        public Term Callee { get; set; }
+        [JsonConverter(typeof(NodeConverter))]
+        public List<Term> Arguments { get; set; }
 
-        public AST(string name, Term expression)
+        public Call(Term callee, List<Term> arguments)
         {
-            Name = name;
-            Expression = expression;
+            Callee = callee;
+            Arguments = arguments;
         }
     }
 }

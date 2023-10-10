@@ -12,19 +12,20 @@ namespace RinhaDeCompiladores.Utils
 {
     public class NodeConverter : JsonConverter
     {
-        public Dictionary<NodeType, Type> typeMapping = new Dictionary<NodeType, Type>()
+        private Dictionary<NodeType, Type> typeMapping = new Dictionary<NodeType, Type>()
         {
-            { NodeType.Var, typeof(string) },
-            { NodeType.Function, typeof(string) },
-            { NodeType.Call, typeof(string) },
-            { NodeType.Let, typeof(string) },
+            { NodeType.Var, typeof(Var) },
+            { NodeType.Function, typeof(Function) },
+            { NodeType.Call, typeof(Call) },
+            { NodeType.Let, typeof(Let) },
             { NodeType.Str, typeof(Str) },
-            { NodeType.Int, typeof(string) },
-            { NodeType.Binary, typeof(string) },
-            { NodeType.If, typeof(string) },
-            { NodeType.Tuple, typeof(string) },
-            { NodeType.First, typeof(string) },
-            { NodeType.Second, typeof(string) },
+            { NodeType.Int, typeof(Int) },
+            { NodeType.Bool, typeof(Bool) },
+            { NodeType.Binary, typeof(Binary) },
+            { NodeType.If, typeof(If) },
+            { NodeType.Tuple, typeof(Schemes.Tuple) },
+            { NodeType.First, typeof(First) },
+            { NodeType.Second, typeof(Second) },
             { NodeType.Print, typeof(Print) }
         };
 
@@ -42,9 +43,9 @@ namespace RinhaDeCompiladores.Utils
 
                 return jsonObject.ToObject(typeMapping[kind]);
             }
-            catch
+            catch(Exception e)
             {
-                throw new Exception($"Invalid value for Kind '{jsonObject["kind"]}'");
+                throw new Exception(e.Message);
             }
         }
 

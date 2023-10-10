@@ -4,7 +4,7 @@
     "kind": "Print",
     "value": {
       "kind": "Str",
-      "value": "Hello world",
+      "value": "Hello World!",
       "location": {
         "start": 7,
         "end": 20,
