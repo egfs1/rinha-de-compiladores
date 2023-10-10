@@ -1,11 +1,10 @@
-﻿using Newtonsoft.Json.Linq;
-using RinhaDeCompiladores.Schemes;
+﻿using RinhaDeCompiladores.Schemes;
 using RinhaDeCompiladores.Schemes.Abstractions;
-using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using System.Xml.Linq;
 
 namespace RinhaDeCompiladores
 {
@@ -15,45 +14,6 @@ namespace RinhaDeCompiladores
         {
             switch (node.Kind)
             {
-                case NodeType.Var:
-                    Var varNode = (Var)node;
-
-                    return env.LookupVariable(varNode.Text);
-
-                case NodeType.Function:
-                    return node;
-
-                case NodeType.Call:
-                    Call callNode = (Call)node;
-                    object? callee = Evaluate(callNode.Callee, env);
-
-                    if (callee is Function calleeFunction)
-                    {
-                        if (callNode.Arguments.Count != calleeFunction.Parameters.Count)
-                        {
-                            throw new Exception($"Call passed {callNode.Arguments.Count} arguments, function accepts {calleeFunction.Parameters.Count}");
-                        }
-
-                        Environment functionEnv = new Environment(env);
-
-                        for (int i = 0; i < calleeFunction.Parameters.Count; i++)
-                        {
-                            functionEnv.DeclareVariable(calleeFunction.Parameters[i].Text, Evaluate(callNode.Arguments[i], env));
-                        }
-
-                        return Evaluate(calleeFunction.Value, functionEnv);
-                    }
-                    else
-                    {
-                        throw new Exception("Cannot call a non-function object.");
-                    }
-
-                case NodeType.Let:
-                    Let letNode = (Let)node;
-                    env.DeclareVariable(letNode.Name.Text, Evaluate(letNode.Value, env));
-
-                    return Evaluate(letNode.Next, env);
-
                 case NodeType.Str:
                     return ((Str)node).Value;
 
@@ -63,50 +23,75 @@ namespace RinhaDeCompiladores
                 case NodeType.Bool:
                     return ((Bool)node).Value;
 
+                case NodeType.Tuple:
+                    return EvaluateTuple((Schemes.Tuple)node, env);
+
+                case NodeType.First:
+                    return EvaluateTupleFirst((First)node, env);
+
+                case NodeType.Second:
+                    return EvaluateTupleSecond((Second)node, env);
+
                 case NodeType.Binary:
                     return EvaluateBinary((Binary)node, env);
 
+                case NodeType.Var:
+                    return EvaluateVar((Var)node, env);
+
+                case NodeType.Let:
+                    return EvaluateLet((Let)node, env);
+
+                case NodeType.Function:
+                    return EvaluateFunction((Function)node, env);
+
+                case NodeType.Call:
+                    return EvaluateCall((Call)node, env);
+
                 case NodeType.If:
-                    If ifNode = (If)node;
-                    object? condition = Evaluate(ifNode.Condition, env);
-
-                    if (condition is bool conditionBool)
-                    {
-                        if (conditionBool)
-                            return Evaluate(ifNode.Then, env);
-                        else
-                            return Evaluate(ifNode.Otherwise, env);
-                    }
-                    else
-                    {
-                        throw new Exception("Condition is not boolean");
-                    }
-
-
-                case NodeType.Tuple:
-                    return null;
-
-                case NodeType.First:
-                    if (node is First firstNode && firstNode.Value is Schemes.Tuple tupleFirstNode)
-                        return Evaluate(tupleFirstNode.First, env);
-                    else
-                        throw new Exception("");
-
-                case NodeType.Second:
-                    if (node is Second secondNode && secondNode.Value is Schemes.Tuple tupleSecondNode)
-                        return Evaluate(tupleSecondNode.Second, env);
-                    else
-                        throw new Exception("");
+                    return EvaluateIf((If)node, env);
 
                 case NodeType.Print:
-                    object? printValue = Evaluate(((Print)node).Value, env);
-                    Console.WriteLine(printValue);
-                    return printValue;
+                   return EvaluatePrint((Print)node, env);
 
                 default:
                     throw new Exception($"Kind '{node.Kind}' does not exist.");
             }
         }
+
+        #region tuple
+
+        private Tuple<object?, object?> EvaluateTuple(Schemes.Tuple node, Environment env)
+        {
+            object? first = Evaluate(node.First, env);
+            object? second = Evaluate(node.Second, env);
+            return new Tuple<object?, object?>(first, second);
+        }
+
+        private object? EvaluateTupleFirst(First node, Environment env)
+        {
+            if (node.Value is Schemes.Tuple tupleNode)
+            {
+                return EvaluateTuple(tupleNode, env).Item1;
+            }
+            else
+            {
+                throw new Exception("");
+            }
+        }
+
+        private object? EvaluateTupleSecond(Second node, Environment env)
+        {
+            if (node.Value is Schemes.Tuple tupleNode)
+            {
+                return EvaluateTuple(tupleNode, env).Item2;
+            }
+            else
+            {
+                throw new Exception("");
+            }
+        }
+
+        #endregion
 
         #region binary
 
@@ -194,6 +179,92 @@ namespace RinhaDeCompiladores
                 default:
                     throw new Exception($"'{op}' is not valid for text operations.");
             }
+        }
+
+        #endregion
+
+        #region variable
+
+        private object? EvaluateVar(Var node, Environment env)
+        {
+            string varname = node.Text;
+            return env.LookupVariable(varname);
+        }
+
+        private object? EvaluateLet(Let node, Environment env)
+        {
+            string varname = node.Name.Text;
+            Term value = node.Value;
+            Term next = node.Next;
+            env.DeclareVariable(varname, Evaluate(value, env));
+            return Evaluate(next, env);
+        }
+
+        #endregion
+
+        #region function
+
+        public object? EvaluateFunction(Function node, Environment env)
+        {
+            return node;
+        }
+
+        public object? EvaluateCall(Call node, Environment env)
+        {
+            object? callee = Evaluate(node.Callee, env);
+
+            if (callee is Function calleeFunction)
+            {
+                if (node.Arguments.Count != calleeFunction.Parameters.Count)
+                {
+                    throw new Exception($"Call passed {node.Arguments.Count} arguments, function accepts {calleeFunction.Parameters.Count}");
+                }
+
+                Environment functionEnv = new Environment(env);
+
+                for (int i = 0; i < calleeFunction.Parameters.Count; i++)
+                {
+                    functionEnv.DeclareVariable(calleeFunction.Parameters[i].Text, Evaluate(node.Arguments[i], env));
+                }
+
+                return Evaluate(calleeFunction.Value, functionEnv);
+            }
+            else
+            {
+                throw new Exception("Cannot call a non-function object.");
+            }
+        }
+
+        #endregion
+
+        #region conditional
+
+        public object? EvaluateIf(If node, Environment env)
+        {
+            object? condition = Evaluate(node.Condition, env);
+
+            if (condition is bool conditionBool)
+            {
+                if (conditionBool)
+                    return Evaluate(node.Then, env);
+                else
+                    return Evaluate(node.Otherwise, env);
+            }
+            else
+            {
+                throw new Exception("Condition is not boolean");
+            }
+        }
+
+        #endregion
+
+        #region output
+
+        public object? EvaluatePrint(Print node, Environment env)
+        {
+            object? value = Evaluate(node.Value, env);
+            Console.WriteLine(value);
+            return value;
         }
 
         #endregion

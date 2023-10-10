@@ -9,8 +9,8 @@ namespace RinhaDeCompiladores
 {
     public class Environment
     {
-        private Dictionary<string, object?> Variables;
-        private Environment? Parent;
+        private readonly Environment? Parent;
+        private readonly Dictionary<string, object?> Variables;
 
         public Environment(Environment? parent = null)
         {

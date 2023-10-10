@@ -25,7 +25,7 @@ namespace RinhaDeCompiladores.Schemes.Abstractions
 
     public abstract class Node
     {
-        public Location Location { get; set; }
+        public Location? Location { get; set; }
     }
 
     public abstract class Term : Node

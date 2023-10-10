@@ -2,33 +2,17 @@
 using Newtonsoft.Json.Linq;
 using RinhaDeCompiladores.Schemes;
 using RinhaDeCompiladores.Schemes.Abstractions;
+using RinhaDeCompiladores.Utils;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace RinhaDeCompiladores.Utils
+namespace RinhaDeCompiladores.Converters
 {
     public class NodeConverter : JsonConverter
     {
-        private Dictionary<NodeType, Type> typeMapping = new Dictionary<NodeType, Type>()
-        {
-            { NodeType.Var, typeof(Var) },
-            { NodeType.Function, typeof(Function) },
-            { NodeType.Call, typeof(Call) },
-            { NodeType.Let, typeof(Let) },
-            { NodeType.Str, typeof(Str) },
-            { NodeType.Int, typeof(Int) },
-            { NodeType.Bool, typeof(Bool) },
-            { NodeType.Binary, typeof(Binary) },
-            { NodeType.If, typeof(If) },
-            { NodeType.Tuple, typeof(Schemes.Tuple) },
-            { NodeType.First, typeof(First) },
-            { NodeType.Second, typeof(Second) },
-            { NodeType.Print, typeof(Print) }
-        };
-
         public override bool CanConvert(Type objectType)
         {
             return objectType == typeof(Node);
@@ -41,9 +25,9 @@ namespace RinhaDeCompiladores.Utils
             {
                 NodeType kind = jsonObject["kind"]!.ToObject<NodeType>();
 
-                return jsonObject.ToObject(typeMapping[kind]);
+                return jsonObject.ToObject(NodeUtils.TypeMapping[kind]);
             }
-            catch(Exception e)
+            catch (Exception e)
             {
                 throw new Exception(e.Message);
             }

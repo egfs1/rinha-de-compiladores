@@ -11,8 +11,8 @@ namespace RinhaDeCompiladores
 
     public class Program 
     {
-        private static ITranslator translator = new Interpreter();
-        private static Environment env = new Environment();
+        private readonly static ITranslator translator = new Interpreter();
+        private readonly static Environment env = new Environment();
 
         static void Main(string[] args)
         {
