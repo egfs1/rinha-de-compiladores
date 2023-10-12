@@ -18,10 +18,12 @@ namespace RinhaDeCompiladores
             Variables = new Dictionary<string, object?>();
         }
 
-        public object? DeclareVariable(string varname, object? value)
+        public void DeclareVariable(string varname, object? value)
         {
-            Variables[varname] = value;
-            return value;
+            if(varname != "_")
+            {
+                Variables[varname] = value;
+            }
         }
 
         public object? LookupVariable(string varname)
@@ -35,10 +37,10 @@ namespace RinhaDeCompiladores
             if (Variables.ContainsKey(varname))
                 return this;
 
-            if (Parent == null)
-                throw new Exception($"Cannot resolve '{varname}' as it does not exist.");
+            if (Parent != null)
+                return Parent.Resolve(varname);
 
-            return Parent.Resolve(varname);
+            throw new Exception($"Cannot resolve '{varname}' as it does not exist.");
         }
     }
 }

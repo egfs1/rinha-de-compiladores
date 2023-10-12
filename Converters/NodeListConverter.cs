@@ -20,6 +20,8 @@ namespace RinhaDeCompiladores.Converters
 
         public override object? ReadJson(JsonReader reader, Type objectType, object? existingValue, JsonSerializer serializer)
         {
+            reader.MaxDepth = 256;
+
             var jsonArray = JArray.Load(reader);
             var list = new List<Term>();
 

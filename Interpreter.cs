@@ -1,4 +1,5 @@
-﻿using RinhaDeCompiladores.Schemes;
+﻿using Microsoft.CSharp.RuntimeBinder;
+using RinhaDeCompiladores.Schemes;
 using RinhaDeCompiladores.Schemes.Abstractions;
 using System.Collections.Generic;
 using System.Linq;
@@ -69,25 +70,27 @@ namespace RinhaDeCompiladores
 
         private object? EvaluateTupleFirst(First node, Environment env)
         {
-            if (node.Value is Schemes.Tuple tupleNode)
+            object? value = Evaluate(node.Value, env);
+            if (value != null && value is Tuple<object?, object?> tuple)
             {
-                return EvaluateTuple(tupleNode, env).Item1;
+                return tuple.Item1;
             }
             else
             {
-                throw new Exception("");
+                throw new Exception("Value of First is not a tuple");
             }
         }
 
         private object? EvaluateTupleSecond(Second node, Environment env)
         {
-            if (node.Value is Schemes.Tuple tupleNode)
+            object? value = Evaluate(node.Value, env);
+            if (value != null  && value is Tuple<object?, object?> tuple)
             {
-                return EvaluateTuple(tupleNode, env).Item2;
+                return tuple.Item2;
             }
             else
             {
-                throw new Exception("");
+                throw new Exception("Value of Second is not a tuple");
             }
         }
 
